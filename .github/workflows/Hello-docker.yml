@@ -1,0 +1,20 @@
+name: Hello-docker
+on: 
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Who are you'
+        required: false
+        
+jobs:
+  hello-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: build and don't push image
+        run: docker build -f Dockerfile.hello -t hello-image .
+      
+      - name: run hello container
+        run: docker run hello-image ${{ github.event.inputs.name }}
