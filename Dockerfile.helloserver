@@ -1,0 +1,8 @@
+FROM python:3.11-alpine
+WORKDIR /usr/src/app
+COPY server.py ./
+ARG CUSTOMER_NAME
+ARG PORT=80
+ENV CUSTOMER_NAME=${CUSTOMER_NAME}
+ENV PORT=${PORT}
+ENTRYPOINT ["python", "server.py"]
