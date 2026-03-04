@@ -14,3 +14,8 @@ jobs:
             echo "Building for: $line"
             docker build --build-arg CUSTOMER_NAME=$line -f Dockerfile.helloserver -t $line .
           done < list.txt
+      - name: run hello container
+        run: |
+            docker run -d -p 8080:80 banna
+            sleep 2
+            curl http://localhost:8080/welcome
