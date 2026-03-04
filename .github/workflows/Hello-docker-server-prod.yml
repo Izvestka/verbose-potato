@@ -13,9 +13,10 @@ jobs:
 
       - name: build and push image
         run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           while read line; do
             echo "Building for: $line"
-            docker build --build-arg CUSTOMER_NAME=$line -f Dockerfile.helloserver -t ghcr.io/${{ github.repository_owner }}/hello:$line .
-            docker push ghcr.io/${{ github.repository_owner }}/hello:$line
+            docker build --build-arg CUSTOMER_NAME=$line -f Dockerfile.helloserver -t ghcr.io/$OWNER/hello:$line .
+            docker push ghcr.io/$OWNER/hello:$line
           done < list.txt
 
