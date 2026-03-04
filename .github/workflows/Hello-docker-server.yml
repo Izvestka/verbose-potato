@@ -11,6 +11,7 @@ jobs:
       - name: build and don't push image
         run: |
           while read line; do
+            echo "Building for: $line"
             docker build --build-arg CUSTOMER_NAME=$line -f Dockerfile.helloserver -t $line .
           done < list.txt
       - name: run hello container
