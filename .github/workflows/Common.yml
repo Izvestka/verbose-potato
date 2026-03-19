@@ -1,6 +1,11 @@
-name: File-extraction
+name: Common
 on: 
-  workflow_dispatch:
+  
+  workflow_call:
+    inputs:
+      env_name:
+        type: string
+        required: true
 
 jobs:
   file-extraction:
@@ -19,15 +24,41 @@ jobs:
   matrix:
     needs: file-extraction
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    environment: ${{ inputs.env_name }}
     strategy:
       matrix:
         customer: ${{ fromJson(needs.file-extraction.outputs.customer) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Login to GHCR
+        if: ${{ inputs.env_name == 'prod' }}
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: build and don't push image
+      - name: build dev
+        if: ${{ inputs.env_name == 'dev' }}
         run: |
             echo "Building for: ${{ matrix.customer }}"
             docker build --build-arg CUSTOMER_NAME=${{ matrix.customer }} --build-arg PORT=3000 -f Dockerfile.helloserver -t ${{ matrix.customer }} .
+
+      - name: build prod
+        if: ${{ inputs.env_name == 'prod' }}
+        run: |
+            OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            echo "Building for: ${{ matrix.customer }}"
+            docker build --build-arg CUSTOMER_NAME=${{ matrix.customer }} --build-arg PORT=80 -f Dockerfile.helloserver -t ghcr.io/${OWNER}/hello:${{ matrix.customer }} .
+      - name: push prod
+        if: ${{ inputs.env_name == 'prod' }}
+        run: |
+            OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            docker push ghcr.io/${OWNER}/hello:${{ matrix.customer }}
+      - name : run hello container
+        if: ${{ inputs.env_name == 'dev' }}
+        run: |
+            docker run -d -p 8080:3000 ${{ matrix.customer }}
+            sleep 2
+            curl http://localhost:8080/welcome
 
