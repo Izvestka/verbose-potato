@@ -3,6 +3,9 @@ on:
   workflow_dispatch:
 jobs:
   deploy-hello-job:
+    permissions:
+         packages: write
+         contents: read
     uses: ./.github/workflows/Common.yml
     with:
       env_name: dev
