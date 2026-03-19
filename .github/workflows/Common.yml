@@ -1,0 +1,33 @@
+name: File-extraction
+on: 
+  workflow_dispatch:
+
+jobs:
+  file-extraction:
+    runs-on: ubuntu-latest
+    outputs: 
+        customer: ${{ steps.readfile.outputs.customer }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: read file and don't build image
+        id: readfile
+        run: |
+              variable=$(cat list.txt | jq -R -s -c 'split("\n") | map(select(length > 0))')
+              echo "customer=$variable" >> $GITHUB_OUTPUT
+  matrix:
+    needs: file-extraction
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        customer: ${{ fromJson(needs.file-extraction.outputs.customer) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: build and don't push image
+        run: |
+            echo "Building for: ${{ matrix.customer }}"
+            docker build --build-arg CUSTOMER_NAME=${{ matrix.customer }} --build-arg PORT=3000 -f Dockerfile.helloserver -t ${{ matrix.customer }} .
+
